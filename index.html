@@ -1,0 +1,216 @@
+<!-- 
+MUST TURN OFF THIS POLICY IF USING GOOGLE CHROME!!!
+chrome://flags/#autoplay-policy 
+-->
+<!doctype html>
+<html>
+	<head>
+		<title>Apex Movement&trade; front desk actualization system</title>
+		<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment.js"></script>
+		<style type="text/css">
+			Body{
+				margin:0;
+			}
+			.wrapper{
+				position:absolute;
+				width:100%;
+				height:100%;
+				background:rgb(209, 210, 212);
+				display:flex;
+			}
+				.calendar{
+					flex:none;
+				}
+					.cursor{
+						width: 100%;
+						height: 10px;
+						background: rgba(255, 0, 0, 0.38);
+					}
+						.cursor div{
+							position: relative;
+							width: 100%;
+							height: 2px;
+							background: white;
+							top: 4px;
+						}
+				.right{
+					flex:1;
+					display:flex;
+					flex-direction:column;
+				}
+					.videoWrap{
+						position:relative;
+						flex:none;
+						background:black;
+						border-bottom:8px solid white;
+					}
+						.video{
+							position:absolute;
+							width:100%;
+							height:100%;
+						}
+						.onVideo{
+							position:absolute;
+							width:100%;
+							opacity:0;
+							background: rgba(0, 0, 0, 0.3);
+							transition:.5s all;
+							flex: none;
+							color: white;
+							padding: 8px;
+							font-family: sans-serif;
+							margin-bottom: -30px;
+							z-index: 1;
+							font-size: 0.8em;
+							display:flex;
+							justify-content: space-between;
+						}
+							.nextVideo{
+								text-decoration: underline;
+								cursor: pointer;
+								margin-right: 16px;
+							}
+					.clock{
+						flex:1;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						font-size: 6vw;
+						color: black;
+						font-family: sans-serif;
+					}
+					.nav{
+						flex:none;
+						height:70px;
+						background:white;
+						display:flex;
+						justify-content: space-between;
+					}
+						.nav img{
+							padding:10px;
+							cursor:pointer;
+						}
+					.picker{
+						display:none;
+					}
+			.overlay{
+				position:absolute;
+				width:100%;
+				height:100%;
+				opacity:0;
+				pointer-events:none;
+				transition:.5s all;
+			}
+				.overlay.shown{
+					opacity:1;
+					pointer-events:all;
+				}
+		</style>
+		<script type="text/javascript">
+			var segheight = 0;
+			$(window).on('load resize', function(){
+				/* set calendar width to always fit proportion of image*/
+				$('.calendar').width($(window).height()/1.125);
+				$('.videoWrap').height($('.videoWrap').width()*(9/16));
+				segheight = $(window).height()/15; //15 calendar segments
+				setCursor(moment()); //adjust cursor
+			});
+			/* move cursor over calendar according to time/ seg size */
+			function setCursor(time){
+				/* hours since 10:30am this morning */
+				var hours = moment.duration(moment().diff(time.startOf('day').hours(10).minutes(30))).asHours();
+				var offset = ((hours+1)*segheight)-4;
+				$('.cursor').css({marginTop : offset});
+			}
+			var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+			setInterval(function(){
+				var time = moment();
+				$('.calendar').css({
+					backgroundImage : "url(schedule/" + days[(new Date).getDay()] + ".jpg)",
+					backgroundSize : 'cover'
+				});	
+				setCursor(time);
+				$('.clock').html(moment().format('h:mm:ss a'));
+			}, 1000);
+
+			// main function
+			$(window).ready(function(){
+				newVideo();
+				$('.vidPicker').on('change', function(e){
+					var newvids = [];
+					for(var i in this.files){
+						if(this.files[i].webkitRelativePath) newvids.push(this.files[i].webkitRelativePath);
+					}
+					videos = newvids;
+					localStorage.setItem('videolist', JSON.stringify(videos));
+					newVideo();
+				});		
+				$('.videoWrap').click(function(){
+					$('.vidPicker').click();
+				});
+				$('.videoWrap').on('mouseover', function(){
+					$('.onVideo').css({opacity : 1});
+				}).on('mouseleave', function(){
+					$('.onVideo').css({opacity : 0});
+				});
+				// uncomment if navigator is wanted
+				// debugging probably required
+				// $('.nav').find('img').click(function(){
+				// 	var src = 'http://apexmovementboulder.com/archive/display/'+$(this).attr('src').match(/.*\/(.*)\.png/)[1]+'.jpg';
+				// 	$('.overlay').css({
+				// 		background : 'url('+src+') #fff no-repeat',
+				// 		backgroundSize : 'contain',
+				// 		backgroundPosition : '50%'
+				// 	}).addClass('shown');
+				// });
+				$('.overlay').click(function(){
+					$(this).removeClass('shown');
+				})
+				$('.nextVideo').click(newVideo);
+				$('.video').on('ended', newVideo);
+			});
+
+			var videos = localStorage.getItem('videolist')?JSON.parse(localStorage.getItem('videolist')):[];
+			function newVideo(){
+				if(videos.length !== 0){
+					var src = videos[Math.floor(Math.random()*videos.length)]; //pick a random video
+					playPromise = $('.video').attr('src', src).get(0).play();
+					if(playPromise !== undefined){ 
+						playPromise.then(() => {
+							var match = decodeURIComponent(src).toLowerCase().match(/.*\/(.*)\.(mp4|mov|wmv)/);
+							$('.videoTitle').html(match?match[1]:'');					
+						}).catch(() => { newVideo() }); 
+					}
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<div class="wrapper">
+			<div class="calendar">
+				<div class="cursor"><div></div></div>
+			</div>
+			<div class="right">
+				<div class="videoWrap">
+					<video class="video" controls></video>
+					<div class="onVideo">
+						<div class="videoTitle"></div>
+						<div class="nextVideo">skip</div>
+					</div>
+				</div>
+				<div class="clock"></div>
+				<!-- uncomment for nav -->
+<!-- 				<div class="nav">
+					<img src="nav/adult.png">
+					<img src="nav/open.png">
+					<img src="nav/youth.png">
+					<img src="nav/specialty.png">
+					<img src="nav/full.png">
+				</div> -->
+			</div>
+		</div>
+		<div class="overlay"></div>
+		<input class="picker vidPicker" type="file" webkitdirectory>
+	</body>
+</html>
