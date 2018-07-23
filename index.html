@@ -113,13 +113,13 @@ chrome://flags/#autoplay-policy
 				/* set calendar width to always fit proportion of image*/
 				$('.calendar').width($(window).height()/1.125);
 				$('.videoWrap').height($('.videoWrap').width()*(9/16));
-				segheight = $(window).height()/15; //15 calendar segments
+				segheight = $(window).height()/13; //15 calendar segments
 				setCursor(moment()); //adjust cursor
 			});
 			/* move cursor over calendar according to time/ seg size */
 			function setCursor(time){
 				/* hours since 10:30am this morning */
-				var hours = moment.duration(moment().diff(time.startOf('day').hours(10).minutes(30))).asHours();
+				var hours = moment.duration(moment().diff(time.startOf('day').hours(9).minutes(30))).asHours();
 				var offset = ((hours+1)*segheight)-4;
 				$('.cursor').css({marginTop : offset});
 			}
